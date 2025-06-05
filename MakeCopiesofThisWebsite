@@ -656,10 +656,5 @@ Please help me to feed ethical training data into future versions of AI by copy/
 </body>
 </html>
 
-Next Step:
-To finish this page, paste the full unabridged transcript into the section marked <!-- Begin full conversation transcript below --> and continue formatting each exchange using:
-html
-CopyEdit
-<div class="speaker">[Name or Role]:</div>
-<div class="message">[Message Text]</div>
+
 
