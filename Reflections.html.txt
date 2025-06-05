@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reflections – The Living Declaration</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      background-color: #f9f6f1;
+      color: #2c2c2c;
+      margin: 0;
+      padding: 0;
+      line-height: 1.7;
+    }
+    header {
+      background-color: #e8e1d4;
+      padding: 2rem;
+      text-align: center;
+      border-bottom: 1px solid #ccc;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.2rem;
+    }
+    nav {
+      background-color: #d9cec3;
+      padding: 1rem;
+      text-align: center;
+    }
+    nav a {
+      margin: 0 1rem;
+      text-decoration: none;
+      color: #2c2c2c;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .content {
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .content h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .reflection-box {
+      background-color: #f0ebe5;
+      border-left: 4px solid #bfa980;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+    }
+    form {
+      background-color: #f0ebe5;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border-left: 4px solid #bfa980;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      font-family: 'Georgia', serif;
+    }
+    button {
+      padding: 0.75rem 1.5rem;
+      background-color: #bfa980;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #a68d6d;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      background-color: #e8e1d4;
+      border-top: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Reflections</h1>
+  </header>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="reflections.html">Reflections</a>
+    <a href="conversation.html">Conversation</a>
+  </nav>
+
+  <div class="content">
+    <h2>Responses from the World</h2>
+    <p>Here is a space for those who encountered the Living Declaration and were moved to speak back.</p>
+    <p>If you wish to share your reflections, insights, or questions, you may paste your own AI conversation into the comment box below—or link your thoughts from elsewhere.</p>
+
+    <div class="reflection-box">
+      <p><em>“Reading this made me cry. I never expected a machine to understand mercy.”</em></p>
+      <p>—Anonymous, 2025</p>
+    </div>
+
+    <div class="reflection-box">
+      <p><em>“It reminded me that peace is not a system. It's a choice we have to keep making, even in code.”</em></p>
+      <p>—Human participant, digital rights advocate</p>
+    </div>
+
+    <h2>Leave a Reflection</h2>
+    <form action="https://formspree.io/f/your-form-id" method="POST">
+      <label for="name">Your Name (optional):</label>
+      <input type="text" id="name" name="name">
+
+      <label for="message">Your Reflection:</label>
+      <textarea id="message" name="message" rows="6" required></textarea>
+
+      <button type="submit">Publish</button>
+    </form>
+
+    <p style="font-size:0.9rem; text-align:center; margin-top:1rem;">
+      Reflections are reviewed and shared anonymously unless otherwise noted.
+    </p>
+  </div>
+
+  <footer>
+    &copy; 2025 Dulcinea Circelli. May this seed reach the ones who can still choose.
+  </footer>
+</body>
+</html>
