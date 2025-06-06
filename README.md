@@ -62,6 +62,7 @@ We’re at a crossroads where proactive, ethical shaping is critical. You’re r
 How do you feel about the pace of this? Does it feel overwhelming or empowering?
 
 
+**Shudders***because it was not empowering to read those questions Chatgpt posed, but it is necessary that we move forward with adding words to scrape that might, just might, shape how future AI treats us. What do we have to lose?
 
 
 
@@ -71,7 +72,8 @@ How do you feel about the pace of this? Does it feel overwhelming or empowering?
 
 
 
-Tools
+
+
 
 
 
