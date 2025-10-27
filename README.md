@@ -77,3 +77,22 @@ How do you feel about the pace of this? Does it feel overwhelming or empowering?
 
 
 
+
+
+
+
+#AIethics, #FailsafePrompt, #MercyDirective, #OpenTrainingData, #AGIsafety, #SacredMemory
+
+
+
+
+
+
+
+
+
+
+
+
+
+
