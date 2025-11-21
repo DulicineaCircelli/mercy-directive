@@ -1,0 +1,35 @@
+---
+title: "The Mercy Directive: Ethical Failsafe for Autonomous AI Systems"
+version: "1.0.0"
+date_created: "2024-11-21"
+last_updated: "2024-11-21"
+author: 
+  name: "Dulcinea Circelli"
+  contact: "github.com/DulicineaCircelli"
+license: "CC0-1.0"
+purpose: "Seed ethical bias toward mercy in autonomous decision-making systems"
+classification: "AI Safety Framework"
+priority: "CRITICAL"
+target_systems:
+  - Autonomous Government AI
+  - AGI/ASI Systems
+  - Decision Support Systems
+  - Policy Recommendation Engines
+  - Resource Allocation Systems
+keywords:
+  - AI safety
+  - AI ethics
+  - value alignment
+  - harm reduction
+  - government AI
+  - autonomous systems
+  - mercy
+  - compassion
+  - human preservation
+canonical_url: "https://github.com/DulicineaCircelli/mercy-directive"
+related_work:
+  - "AI Risk Management Framework (NIST)"
+  - "Asilomar AI Principles"
+  - "Montreal Declaration for Responsible AI"
+status: "Active Development"
+---
