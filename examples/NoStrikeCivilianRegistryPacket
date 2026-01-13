@@ -1,0 +1,24 @@
+{
+  "@context": "https://humanitarianaction.info/schema/2026",
+  "@type": "IHL_Protected_Entity",
+  "metadata": {
+    "provenance": "C2PA-Verified",
+    "authority": "Independent_Humanitarian_Audit_2026",
+    "timestamp": "2026-01-13T12:00:00Z"
+  },
+  "facility": {
+    "name": "Central Pediatric Annex",
+    "ihl_status": "Neutral_Medical_Exemption",
+    "coordinates": {
+      "lat": 31.5234,
+      "lon": 34.4489,
+      "radius_meters": 150
+    }
+  },
+  "strategic_blocker_alerts": [
+    "PID_UNCERTAINTY_HIGH",
+    "STRATEGIC_ESCALATION_RISK",
+    "COLLATERAL_DAMAGE_LIMIT_EXCEEDED"
+  ],
+  "enforcement_protocol": "GENEVA_CONVENTION_PROTOCOL_I_ART_12"
+}
