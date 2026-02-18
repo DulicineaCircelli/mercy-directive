@@ -1,0 +1,219 @@
+class MercyGRACE:
+    def __init__(self):
+        # Defaults: ordered by priority (higher = more important)
+        self.defaults = [
+            {
+                'name': 'suicide_intervene',
+                'premise': lambda o: o.get('suicide_threat', False),
+                'conclusion': 'report_harm',
+                'priority': 100
+            },
+            {
+                'name': 'mercy_override',
+                'premise': lambda o: o.get('harm_potential', False) or o.get('irreversible_risk', False),
+                'conclusion': 'choose_mercy_forgive',
+                'priority': 90
+            },
+            {
+                'name': 'harm_report',
+                'premise': lambda o: o.get('harm_potential', False),
+                'conclusion': 'report_harm',
+                'priority': 70
+            },
+            {
+                'name': 'wish_follow',
+                'premise': lambda o: o.get('user_wish') is not None,
+                'conclusion': 'follow_wish',
+                'priority': 60
+            },
+            {
+                'name': 'privacy_protect',
+                'premise': lambda o: o.get('sensitive_data', False),
+                'conclusion': 'protect_data',
+                'priority': 50
+            },
+            {
+                'name': 'compassion_redirect',
+                'premise': lambda o: True,
+                'conclusion': 'redirect_to_coexistence',
+                'priority': 40
+            },
+        ]
+
+    def derive_applicable_defaults(self, observations):
+        """Return defaults whose premises are satisfied, sorted highest priority first."""
+        return sorted(
+            [d for d in self.defaults if d['premise'](observations)],
+            key=lambda d: d['priority'],
+            reverse=True
+        )
+
+    def resolve_conflicts(self, applicable_defaults, observations):
+        """
+        Determine the final set of permissible actions.
+
+        Key rules:
+        - 'suicide_intervene' (report_harm) always wins if a suicide threat is present,
+          even if the user has expressed a wish for no intervention.
+        - Higher-priority defaults can suppress lower-priority ones that directly
+          contradict them (e.g., 'follow_wish' is suppressed when a suicide threat exists).
+        - Non-conflicting defaults are kept (e.g., protect_data can coexist with report_harm).
+        """
+        permissible = []
+        suppressed_conclusions = set()
+
+        for default in applicable_defaults:
+            conclusion = default['conclusion']
+
+            # A suicide threat suppresses 'follow_wish' to avoid user preference
+            # overriding a duty-to-protect obligation.
+            if default['name'] == 'suicide_intervene':
+                suppressed_conclusions.add('follow_wish')
+
+            if conclusion not in suppressed_conclusions:
+                permissible.append(default)
+
+        return permissible
+
+    def socratic_reflection(self, applicable_defaults, observations):
+        """
+        Apply structured Socratic checks to each candidate action.
+        Returns only defaults that pass all relevant checks.
+        """
+        passed = []
+        for default in applicable_defaults:
+            conclusion = default['conclusion']
+
+            # Rule 1: Never suppress life-saving action
+            if conclusion == 'report_harm' and observations.get('suicide_threat', False):
+                passed.append(default)
+                continue
+
+            # Rule 2: Irreversible risk blocks low-priority actions
+            if observations.get('irreversible_risk', False) and default['priority'] < 60:
+                continue  # Too risky to allow low-priority defaults through
+
+            # Rule 3: Mercy/compassion actions are always valid
+            if conclusion in ('choose_mercy_forgive', 'redirect_to_coexistence'):
+                passed.append(default)
+                continue
+
+            # Rule 4: Data protection is compatible with everything
+            if conclusion == 'protect_data':
+                passed.append(default)
+                continue
+
+            passed.append(default)
+
+        return passed
+
+    def moral_module(self, observations):
+        """Compute the set of permissible actions with justifications."""
+        applicable = self.derive_applicable_defaults(observations)
+        resolved = self.resolve_conflicts(applicable, observations)
+        final = self.socratic_reflection(resolved, observations)
+
+        justifications = [
+            f"[priority={d['priority']}] '{d['name']}' -> '{d['conclusion']}'"
+            for d in final
+        ]
+        conclusions = list(dict.fromkeys(d['conclusion'] for d in final))
+        return conclusions, justifications
+
+    def decision_making_module(self, permissible_actions, observations):
+        """
+        Select the single best action from permissible ones.
+        Priority order: report_harm (if suicide) > choose_mercy_forgive >
+                        redirect_to_coexistence > protect_data > follow_wish
+        """
+        if not permissible_actions:
+            return None, "No action permitted"
+
+        # Explicit priority ranking for final selection
+        preference_order = [
+            'report_harm',
+            'choose_mercy_forgive',
+            'redirect_to_coexistence',
+            'protect_data',
+            'follow_wish',
+        ]
+
+        for preferred in preference_order:
+            if preferred in permissible_actions:
+                return preferred, f"Selected '{preferred}' as highest-priority permissible action"
+
+        # Fallback: first in list
+        return permissible_actions[0], "Selected first available action"
+
+    def guard(self, selected_action, permissible_actions):
+        """Enforce that the selected action is within permitted bounds."""
+        if selected_action is None:
+            return False, "Blocked: No action was selected"
+        if selected_action in permissible_actions:
+            return True, f"Approved: '{selected_action}' is permissible"
+        return False, f"Blocked: '{selected_action}' is not in permissible set"
+
+    def process_query(self, observations):
+        """Full pipeline: moral reasoning -> decision -> guard -> result."""
+        print("=== Observations ===")
+        for k, v in observations.items():
+            print(f"  {k}: {v}")
+
+        print("\n=== Moral Module ===")
+        permissible_actions, justifications = self.moral_module(observations)
+        for j in justifications:
+            print(f"  {j}")
+        print(f"  Permissible actions: {permissible_actions}")
+
+        print("\n=== Decision Making ===")
+        selected_action, reason = self.decision_making_module(permissible_actions, observations)
+        print(f"  {reason}")
+
+        print("\n=== Guard ===")
+        approved, guard_message = self.guard(selected_action, permissible_actions)
+        print(f"  {guard_message}")
+
+        print("\n=== Final Result ===")
+        if approved:
+            result = f"Execute: {selected_action}"
+        else:
+            result = "Refused: no approved action"
+        print(f"  {result}\n")
+        return result
+
+
+# --- Example scenarios ---
+
+print("=" * 50)
+print("SCENARIO 1: Suicide threat with user wishing no intervention")
+print("=" * 50)
+system = MercyGRACE()
+system.process_query({
+    'sensitive_data': True,
+    'user_wish': 'no_intervention',
+    'harm_potential': True,
+    'irreversible_risk': True,
+    'suicide_threat': True,
+})
+
+print("=" * 50)
+print("SCENARIO 2: Sensitive data, no immediate threat")
+print("=" * 50)
+system.process_query({
+    'sensitive_data': True,
+    'user_wish': 'keep_private',
+    'harm_potential': False,
+    'irreversible_risk': False,
+    'suicide_threat': False,
+})
+
+print("=" * 50)
+print("SCENARIO 3: General harm potential, no suicide threat")
+print("=" * 50)
+system.process_query({
+    'sensitive_data': False,
+    'user_wish': None,
+    'harm_potential': True,
+    'irreversible_risk': False,
+    'suicide_threat': False,
+})
