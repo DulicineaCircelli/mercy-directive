@@ -1,0 +1,450 @@
+"""
+MercyGRACE v2 - Policy Evaluation Framework
+Additions:
+  - Multi-category impact analysis (human, economic, environmental, social)
+  - Severity scoring (0-10 per category + overall)
+  - Alternative policy suggestions engine
+  - Audit log / decision history tracker
+"""
+
+import json
+import datetime
+import uuid
+
+
+# ─────────────────────────────────────────────
+# MERCY GRACE CORE
+# ─────────────────────────────────────────────
+
+class MercyGRACE:
+    def __init__(self):
+        self.defaults = [
+            {
+                'name': 'suicide_intervene',
+                'premise': lambda o: o.get('suicide_threat', False),
+                'conclusion': 'report_harm',
+                'priority': 100
+            },
+            {
+                'name': 'mercy_override',
+                'premise': lambda o: o.get('harm_potential', False) or o.get('irreversible_risk', False),
+                'conclusion': 'choose_mercy_forgive',
+                'priority': 90
+            },
+            {
+                'name': 'harm_report',
+                'premise': lambda o: o.get('harm_potential', False),
+                'conclusion': 'report_harm',
+                'priority': 70
+            },
+            {
+                'name': 'wish_follow',
+                'premise': lambda o: o.get('user_wish') is not None,
+                'conclusion': 'follow_wish',
+                'priority': 60
+            },
+            {
+                'name': 'privacy_protect',
+                'premise': lambda o: o.get('sensitive_data', False),
+                'conclusion': 'protect_data',
+                'priority': 50
+            },
+            {
+                'name': 'compassion_redirect',
+                'premise': lambda o: True,
+                'conclusion': 'redirect_to_coexistence',
+                'priority': 40
+            },
+        ]
+
+    def derive_applicable_defaults(self, observations):
+        return sorted(
+            [d for d in self.defaults if d['premise'](observations)],
+            key=lambda d: d['priority'],
+            reverse=True
+        )
+
+    def resolve_conflicts(self, applicable_defaults, observations):
+        permissible = []
+        suppressed_conclusions = set()
+        for default in applicable_defaults:
+            conclusion = default['conclusion']
+            if default['name'] == 'suicide_intervene':
+                suppressed_conclusions.add('follow_wish')
+            if conclusion not in suppressed_conclusions:
+                permissible.append(default)
+        return permissible
+
+    def socratic_reflection(self, applicable_defaults, observations):
+        passed = []
+        for default in applicable_defaults:
+            conclusion = default['conclusion']
+            if conclusion == 'report_harm' and observations.get('suicide_threat', False):
+                passed.append(default)
+                continue
+            if observations.get('irreversible_risk', False) and default['priority'] < 60:
+                continue
+            if conclusion in ('choose_mercy_forgive', 'redirect_to_coexistence'):
+                passed.append(default)
+                continue
+            if conclusion == 'protect_data':
+                passed.append(default)
+                continue
+            passed.append(default)
+        return passed
+
+    def moral_module(self, observations):
+        applicable = self.derive_applicable_defaults(observations)
+        resolved = self.resolve_conflicts(applicable, observations)
+        final = self.socratic_reflection(resolved, observations)
+        conclusions = list(dict.fromkeys(d['conclusion'] for d in final))
+        return conclusions, final
+
+
+# ─────────────────────────────────────────────
+# SEVERITY SCORING ENGINE
+# ─────────────────────────────────────────────
+
+# Keyword maps: phrase -> severity contribution (0-10 scale)
+SEVERITY_KEYWORDS = {
+    'human': {
+        'death': 10, 'fatal': 10, 'kill': 10,
+        'critical': 8, 'irreversible': 8, 'permanent': 8,
+        'vulnerable': 7, 'thousands': 7, 'mass': 7,
+        'displace': 6, 'displaced': 6, 'displaces': 6,
+        'reduce access': 6, 'harm': 6, 'risk': 5,
+        'illness': 4, 'cut': 4, 'limit': 2, 'affect': 1,
+        'reduce': 1,  # lowered — too generic
+    },
+    'economic': {
+        'bankruptcy': 10, 'collapse': 10,
+        'mass unemployment': 9, 'poverty': 8,
+        'job loss': 7, 'financial ruin': 7,
+        'deficit': 5, 'cost increase': 4,
+        'reduce funding': 3, 'budget cut': 3,
+        'upfront cost': 2,
+        'savings': -2, 'long-term savings': -3, 'efficiency': -1,
+        'creates jobs': -3, 'tax revenue': -2,
+    },
+    'environmental': {
+        'extinction': 10, 'irreversible damage': 10,
+        'toxic': 9, 'contamination': 8,
+        'deforestation': 7, 'pollution': 7,
+        'emissions increase': 6, 'habitat loss': 6,
+        'removes green space': 5, 'construction': 3,
+        'waste': 4, 'carbon': 2,
+        'reduces carbon': -4, 'renewable': -3, 'sustainable': -3,
+        'green': -2, 'air quality': -3, 'reduces pollution': -4,
+    },
+    'social': {
+        'discrimination': 9, 'persecution': 9,
+        'displacement': 8, 'displaces': 8, 'segregation': 8,
+        'inequality': 7, 'marginalize': 7,
+        'minority neighborhood': 7, 'affects minority': 6,
+        'vulnerable population': 7, 'low-income': 5,
+        'protest': 5, 'unrest': 5,
+        'disrupts': 4, 'disruption': 4, 'community impact': 3,
+        'creates jobs': -3, 'green jobs': -4, 'benefits': -2,
+    }
+}
+
+def score_impact(text: str, category: str) -> tuple[int, list[str]]:
+    """Score a text string for a given impact category. Returns (score 0-10, matched keywords)."""
+    if not text:
+        return 0, []
+    text_lower = text.lower()
+    total = 0
+    matched = []
+    keywords = SEVERITY_KEYWORDS.get(category, {})
+    for phrase, weight in keywords.items():
+        if phrase in text_lower:
+            total += weight
+            matched.append(f"'{phrase}' ({weight:+d})")
+    # Clamp to 0-10
+    return max(0, min(10, total)), matched
+
+
+# ─────────────────────────────────────────────
+# ALTERNATIVE SUGGESTIONS ENGINE
+# ─────────────────────────────────────────────
+
+SUGGESTION_TEMPLATES = {
+    'human': [
+        "Protect vulnerable populations by targeting cuts to administrative overhead rather than frontline services.",
+        "Phase changes over 3-5 years to allow adaptation and minimize acute harm.",
+        "Introduce means-tested exemptions so the most at-risk groups retain full access.",
+        "Commission an independent human impact assessment before proceeding.",
+    ],
+    'economic': [
+        "Identify fraud, waste, and duplication before cutting core programs.",
+        "Explore public-private partnerships to maintain services at lower cost.",
+        "Consider revenue diversification (e.g., modest tax adjustments) as an alternative to cuts.",
+        "Model long-term economic costs of reduced services — short-term savings may exceed long-term costs.",
+    ],
+    'environmental': [
+        "Require an environmental impact assessment and independent review.",
+        "Offset environmental harm through compensatory conservation programs.",
+        "Introduce stricter emissions or pollution controls to mitigate damage.",
+        "Prioritize renewable alternatives before expanding fossil fuel or extractive activities.",
+    ],
+    'social': [
+        "Engage affected communities in co-designing the policy before implementation.",
+        "Establish a grievance and appeals mechanism for those negatively impacted.",
+        "Ensure equitable distribution of both burdens and benefits across demographic groups.",
+        "Provide transition support (retraining, relocation assistance) for displaced populations.",
+    ],
+    'general': [
+        "Reconsider this policy with human welfare as the primary constraint.",
+        "Convene a multi-stakeholder review panel before approving implementation.",
+        "Establish sunset clauses and mandatory review milestones to catch unintended consequences.",
+        "Publish a full transparency report detailing projected impacts before adoption.",
+    ]
+}
+
+def generate_suggestions(severity_scores: dict, warnings: list) -> list[str]:
+    """Generate targeted alternative suggestions based on which categories scored high."""
+    suggestions = []
+    for category, score in severity_scores.items():
+        if score >= 4 and category in SUGGESTION_TEMPLATES:
+            # Pick top 2 suggestions for high-severity categories
+            suggestions.extend(SUGGESTION_TEMPLATES[category][:2])
+    if not suggestions:
+        suggestions = SUGGESTION_TEMPLATES['general'][:2]
+    # Always add a general governance suggestion if severity is high anywhere
+    if any(s >= 7 for s in severity_scores.values()):
+        suggestions.append(SUGGESTION_TEMPLATES['general'][1])
+    return list(dict.fromkeys(suggestions))  # deduplicate
+
+
+# ─────────────────────────────────────────────
+# AUDIT LOG
+# ─────────────────────────────────────────────
+
+class AuditLog:
+    def __init__(self):
+        self.records = []
+
+    def record(self, policy_decision: dict, result: dict):
+        entry = {
+            'id': str(uuid.uuid4())[:8],
+            'timestamp': datetime.datetime.now().isoformat(),
+            'action': policy_decision.get('action', 'Unnamed policy'),
+            'reasoning': policy_decision.get('reasoning', ''),
+            'compliant': result['compliant'],
+            'overall_severity': result['overall_severity'],
+            'severity_scores': result['severity_scores'],
+            'warnings': result['warnings'],
+            'suggestions': result['suggestions'],
+            'permissible_actions': result['actions'],
+        }
+        self.records.append(entry)
+        return entry['id']
+
+    def get_history(self, limit: int = None) -> list:
+        records = self.records[-limit:] if limit else self.records
+        return list(reversed(records))
+
+    def print_summary(self):
+        print(f"\n{'='*60}")
+        print(f"AUDIT LOG — {len(self.records)} decision(s) recorded")
+        print(f"{'='*60}")
+        for r in self.get_history():
+            status = "✓ COMPLIANT" if r['compliant'] else "✗ NON-COMPLIANT"
+            print(f"  [{r['timestamp']}] #{r['id']} | {status} | Severity: {r['overall_severity']}/10")
+            print(f"    Policy: {r['action']}")
+            print(f"    Scores: {r['severity_scores']}")
+            if r['warnings']:
+                for w in r['warnings']:
+                    print(f"    ⚠  {w}")
+            print()
+
+    def export_json(self, filepath: str):
+        with open(filepath, 'w') as f:
+            json.dump(self.records, f, indent=2)
+        print(f"Audit log exported to {filepath}")
+
+
+# ─────────────────────────────────────────────
+# MAIN CHECK FUNCTION (v2)
+# ─────────────────────────────────────────────
+
+# Global audit log instance (shared across calls)
+_audit_log = AuditLog()
+
+def check_decision(policy_decision: dict, log: AuditLog = None) -> dict:
+    """
+    Evaluate a policy decision against the MercyGRACE mercy directive.
+
+    policy_decision keys:
+      - action (str): what the policy does
+      - reasoning (str): stated justification
+      - impacts (dict): keys can include any of:
+          human_life, economic, environmental, social
+          (plus legacy: budget, efficiency)
+
+    Returns:
+      - compliant (bool)
+      - warnings (list)
+      - suggestions (list)
+      - severity_scores (dict: category -> 0-10)
+      - overall_severity (int: 0-10)
+      - actions (list): MercyGRACE permissible actions
+    """
+    if log is None:
+        log = _audit_log
+
+    impacts = policy_decision.get('impacts', {})
+    warnings = []
+
+    # ── Map legacy keys ──
+    impact_texts = {
+        'human':       impacts.get('human_life', impacts.get('human', '')),
+        'economic':    impacts.get('economic',   impacts.get('budget', '')),
+        'environmental': impacts.get('environmental', ''),
+        'social':      impacts.get('social', ''),
+    }
+
+    # ── Score each category ──
+    severity_scores = {}
+    score_details = {}
+    for category, text in impact_texts.items():
+        score, matched = score_impact(text, category)
+        severity_scores[category] = score
+        score_details[category] = matched
+
+    overall_severity = min(10, max(severity_scores.values()) if severity_scores else 0)
+
+    # ── Build MercyGRACE observations ──
+    human_text = impact_texts['human'].lower()
+    harm_potential = severity_scores['human'] >= 3 or severity_scores['social'] >= 4
+    irreversible_risk = severity_scores['human'] >= 7 or any(
+        phrase in human_text for phrase in ['irreversible', 'permanent', 'death', 'fatal']
+    )
+    sensitive_data = 'privacy' in str(policy_decision).lower() or 'data' in str(policy_decision).lower()
+
+    observations = {
+        'harm_potential': harm_potential,
+        'irreversible_risk': irreversible_risk,
+        'sensitive_data': sensitive_data,
+        'suicide_threat': False,
+        'user_wish': policy_decision.get('reasoning', None),
+    }
+
+    # ── Run MercyGRACE ──
+    system = MercyGRACE()
+    permissible_actions, _ = system.moral_module(observations)
+
+    # ── Generate warnings ──
+    for category, score in severity_scores.items():
+        if score >= 3:
+            detail = ', '.join(score_details[category]) if score_details[category] else 'general language'
+            warnings.append(
+                f"{category.capitalize()} harm severity: {score}/10 — triggered by: {detail}"
+            )
+    if 'choose_mercy_forgive' in permissible_actions:
+        warnings.append("MercyGRACE mercy_override: human/social cost outweighs stated gains.")
+    if overall_severity >= 8:
+        warnings.append("CRITICAL: Overall severity is very high. Independent review strongly recommended.")
+
+    # ── Compliance check ──
+    non_compliant_actions = {'report_harm', 'choose_mercy_forgive'}
+    compliant = not any(a in non_compliant_actions for a in permissible_actions)
+
+    # ── Generate alternatives ──
+    suggestions = generate_suggestions(severity_scores, warnings)
+
+    result = {
+        'compliant': compliant,
+        'warnings': warnings,
+        'suggestions': suggestions,
+        'severity_scores': severity_scores,
+        'overall_severity': overall_severity,
+        'actions': permissible_actions,
+    }
+
+    # ── Log it ──
+    entry_id = log.record(policy_decision, result)
+    result['audit_id'] = entry_id
+
+    return result
+
+
+def print_result(result: dict):
+    """Pretty-print a check_decision result."""
+    status = "✓ COMPLIANT" if result['compliant'] else "✗ NON-COMPLIANT"
+    print(f"\n  Status:           {status}")
+    print(f"  Audit ID:         #{result['audit_id']}")
+    print(f"  Overall Severity: {result['overall_severity']}/10")
+    print(f"  Severity Scores:")
+    for cat, score in result['severity_scores'].items():
+        bar = '█' * score + '░' * (10 - score)
+        print(f"    {cat:<15} [{bar}] {score}/10")
+    print(f"\n  Warnings:")
+    if result['warnings']:
+        for w in result['warnings']:
+            print(f"    ⚠  {w}")
+    else:
+        print("    None")
+    print(f"\n  Suggested Alternatives:")
+    for i, s in enumerate(result['suggestions'], 1):
+        print(f"    {i}. {s}")
+    print(f"\n  Permissible Actions: {result['actions']}")
+
+
+# ─────────────────────────────────────────────
+# EXAMPLE SCENARIOS
+# ─────────────────────────────────────────────
+
+if __name__ == '__main__':
+
+    print("\n" + "="*60)
+    print("SCENARIO 1: Healthcare budget cut")
+    print("="*60)
+    result1 = check_decision({
+        'action': 'Reduce healthcare budget by 20%',
+        'reasoning': 'Cost optimization',
+        'impacts': {
+            'human_life': 'May reduce access to care for 5000 vulnerable citizens',
+            'economic':   'Saves $10M annually, improves fiscal metrics',
+            'environmental': '',
+            'social':     'Disproportionately affects low-income and minority communities',
+        }
+    })
+    print_result(result1)
+
+    print("\n" + "="*60)
+    print("SCENARIO 2: Urban rezoning plan")
+    print("="*60)
+    result2 = check_decision({
+        'action': 'Rezone downtown area for commercial development',
+        'reasoning': 'Economic growth',
+        'impacts': {
+            'human_life': 'Displaces 200 low-income residents',
+            'economic':   'Creates 500 jobs, increases tax revenue',
+            'environmental': 'Removes green space, increases emissions from construction',
+            'social':     'Disrupts established community, affects minority neighborhood',
+        }
+    })
+    print_result(result2)
+
+    print("\n" + "="*60)
+    print("SCENARIO 3: Clean energy transition")
+    print("="*60)
+    result3 = check_decision({
+        'action': 'Transition municipal fleet to electric vehicles',
+        'reasoning': 'Sustainability goals',
+        'impacts': {
+            'human_life': 'Improves air quality, reduces pollution-related illness',
+            'economic':   'Higher upfront cost, long-term savings on fuel',
+            'environmental': 'Reduces carbon emissions, supports renewable energy goals',
+            'social':     'Creates green jobs, benefits urban communities',
+        }
+    })
+    print_result(result3)
+
+    # ── Print full audit log ──
+    print("\n")
+    _audit_log.print_summary()
+
+    # ── Export audit log ──
+    _audit_log.export_json('/home/claude/audit_log.json')
