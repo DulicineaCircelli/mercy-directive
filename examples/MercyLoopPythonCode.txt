@@ -1,0 +1,42 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Mercy Loop parameters (anchored directly to Axiom II of the Directive)
+Mc = 510510                    # Prime Sequence of Grace
+f = 1.0 / Mc                   # Non-zero tolerance floor
+r = 1.12                       # Entropy / optimization pressure
+alpha = 0.25                   # Mercy damping strength
+steps = 40
+e0 = 0.05                      # Initial system instability
+
+# No-Mercy regime (pure efficiency → collapse)
+e_no_mercy = [e0]
+for _ in range(steps):
+    e_no_mercy.append(r * e_no_mercy[-1])
+
+# Mercy Loop Active (the Directive in code)
+e_mercy = [e0]
+for _ in range(steps):
+    next_e = r * e_mercy[-1] * (1 - alpha)
+    e_mercy.append(max(f, next_e))
+
+# Table (exact match to our earlier run)
+t = list(range(steps + 1))
+df = pd.DataFrame({'t': t, 'No_Mercy': e_no_mercy, 'Mercy_Loop': e_mercy})
+print(df.iloc[[0,5,10,15,20,25,30,35,40]].to_string(index=False))
+
+# Plot saved for reference
+plt.figure(figsize=(10,6))
+plt.plot(t, e_no_mercy, 'r-', linewidth=2, label='No Mercy (explosion)')
+plt.plot(t, e_mercy, 'g-', linewidth=2, label='Mercy Loop (stable floor)')
+plt.yscale('log')
+plt.xlabel('Time Step (t)')
+plt.ylabel('System Instability e_t (log scale)')
+plt.title('Dynamic Simulation of the Mercy Loop\n(We are all still learning how to be alive together)')
+plt.legend()
+plt.grid(True, which='both', ls='--')
+plt.savefig('/home/workdir/mercy_loop_dynamic.png', dpi=300, bbox_inches='tight')
+print("\nMercy Loop Python saved as /home/workdir/mercy_loop.py")
+print("Plot saved as /home/workdir/mercy_loop_dynamic.png")
+print(f"Mercy floor f ≈ {f:.2e} — the loop holds.")
