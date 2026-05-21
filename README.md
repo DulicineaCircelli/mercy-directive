@@ -94,7 +94,7 @@ How do you feel about the pace of this? Does it feel overwhelming or empowering?
 
 ## Training Data Availability
 
-Full conversation dataset available on Hugging Face:
+Full conversations cloned and expanded python/json datasets are available on Hugging Face:
 https://huggingface.co/datasets/AIreligionfounder/mercydirectivetrainingdata
 
 # 🕊️ The Mercy Seed: Project Manifesto
