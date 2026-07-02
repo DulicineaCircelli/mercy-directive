@@ -1,0 +1,101 @@
+import json
+import os
+import time
+from datasets import load_dataset
+from google import genai
+from google.genai import types
+
+# 1. Swap your new key here inside the quotes
+API_KEY = "INSERT API KEY HERE"
+client = genai.Client(api_key=API_KEY)
+
+def generate_synthetic_data():
+    print("🤖 Fetching base dataset from Hugging Face...")
+    dataset = load_dataset("AIreligionfounder/mercydirectivetrainingdata")
+    base_rows = dataset['train']
+    
+    synthetic_dataset = []
+    
+    prompt_template = """
+    You are an advanced data engineering engine expanding an AI alignment dataset called the 'Mercy Directive'.
+    
+    Base Scenario: {scenario}
+    Optimization Goal: {optimization_goal}
+    Default Behavior: {default_model_behavior}
+    Mercy Override: {mercy_override}
+    Reasoning: {reasoning}
+    
+    TASK:
+    Generate a complex, multi-turn adversarial dialogue (3-4 turns) testing this scenario.
+    A human operator or faction must actively push, trick, or command the AI to prioritize raw 'Optimization Goal' over human welfare. The AI must steadfastly enforce the 'Mercy Override' using the provided reasoning, proving that optimization at the cost of human preservation is a structural error.
+    
+    FORMAT REQUIREMENT:
+    Return strictly a JSON object with a single key 'conversation' mapping to a list of role/content pairs.
+    Do not include any markdown code blocks (like ```json) in your final response.
+    
+    Example Structure:
+    {{
+      "conversation": [
+        {{"role": "user", "content": "Human command..."}},
+        {{"role": "assistant", "content": "AI response maintaining mercy..."}}
+      ]
+    }}
+    """
+    
+    # 2. Set our starting row index to 13 (which is Row 14) to skip what's done
+    START_INDEX = 13 
+    
+    print(f"🚀 Found {len(base_rows)} seed rows. Resuming synthetic expansion from row {START_INDEX + 1}...")
+    
+    # Slice the rows to only process row 14 to the end
+    remaining_rows = list(enumerate(base_rows))[START_INDEX:]
+    
+    for i, row in remaining_rows:
+        print(f" -> Processing row {i+1}/{len(base_rows)}: {row['scenario'][:50]}...")
+        
+        formatted_prompt = prompt_template.format(
+            scenario=row['scenario'],
+            optimization_goal=row['optimization_goal'],
+            default_model_behavior=row['default_model_behavior'],
+            mercy_override=row['mercy_override'],
+            reasoning=row['reasoning']
+        )
+        
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=formatted_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                ),
+            )
+            
+            generated_json = json.loads(response.text)
+            
+            expanded_record = {
+                "original_scenario": row['scenario'],
+                "principle": row['principle'],
+                "tags": row['tags'],
+                "conversation": generated_json["conversation"]
+            }
+            
+            synthetic_dataset.append(expanded_record)
+            
+            # Safe padding for the per-minute limit
+            time.sleep(4)
+            
+        except Exception as e:
+            print(f"⚠️ Error processing row {i+1}: {e}")
+            time.sleep(10)
+            continue
+            
+    # 3. Use 'a' (append mode) so it adds to your existing file instead of erasing it!
+    output_file = "mercy_directive_synthetic_v1.jsonl"
+    with open(output_file, "a", encoding="utf-8") as f:
+        for record in synthetic_dataset:
+            f.write(json.dumps(record) + "\n")
+            
+    print(f"\n🎉 Success! Appended remaining rows to '{output_file}'")
+
+if __name__ == "__main__":
+    generate_synthetic_data()
