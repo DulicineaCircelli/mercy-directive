@@ -1,0 +1,36 @@
+which folder should I save it in so it's easiest for my command prompt to find?
+The absolute easiest place to save your files is in a brand-new folder created directly inside your User Home directory or right on your Desktop.
+
+To keep things seamless for the command line, the golden rule is to avoid spaces in your folder name. Use a hyphen or an underscore instead. Naming the folder mercy-directive matches your mercy-directive repository perfectly and keeps your workspace clean.
+
+Here are the two best options for where to put it and exactly how to find it:
+
+Option 1: The User Home Folder (Fastest to type)
+When you first open your Command Prompt (Windows) or Terminal (Mac), it automatically opens up directly inside your personal User folder by default (e.g., C:\Users\YourName or /Users/YourName).
+
+If you create your mercy-directive folder right inside that folder, you only have to type one tiny command to get there:
+
+cd mercy-directive
+
+Option 2: The Desktop (Easiest to see visually)
+If you prefer being able to look at the folder on your screen while you work, save the mercy-directive folder right on your Desktop.
+
+To navigate there from the default startup screen, you just tell the command line to step into the Desktop first:
+
+Windows: cd Desktop\mercy-directive
+
+Mac/Linux: cd Desktop/mercy-directive
+
+How to Run Your Script Once It's Saved
+Drop both build_dataset.py and raw_logs.txt into that new folder.
+
+Open your Command Prompt or Terminal.
+
+Type the cd command for the location you chose above and hit Enter.
+
+Run the script by typing:
+
+Bash
+python build_dataset.py
+(Tip: If you ever get lost in the command prompt and want to make sure you are in the right spot before running your script, type dir on Windows or ls on Mac and press Enter. It will show you a list of every file in your current folder so you can verify that your script is sitting right there waiting for you.)
+
